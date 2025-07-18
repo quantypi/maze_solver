@@ -113,6 +113,7 @@ class Maze:
         self.__create_cells()
         self.__break_entrance_and_exit()
         self.__break_walls_r(0, 0)
+        self.__reset_cells_visited()
 
     def __create_cells(self):
         for col in range(self.__num_cols):
@@ -183,12 +184,54 @@ class Maze:
 
                     self.__break_walls_r(ni, nj)
 
+    def __reset_cells_visited(self):
+        for col in self.__cells:
+            for cell in col:
+                cell.visited = False
 
-# Entry point
+    def solve(self):
+        return self.__solve_r(0, 0)
+
+    def __solve_r(self, i, j):
+        self.__animate()
+        current = self.__cells[i][j]
+        current.visited = True
+
+        if i == self.__num_cols - 1 and j == self.__num_rows - 1:
+            return True
+
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        for dx, dy in directions:
+            ni, nj = i + dx, j + dy
+            if 0 <= ni < self.__num_cols and 0 <= nj < self.__num_rows:
+                neighbor = self.__cells[ni][nj]
+                if not neighbor.visited:
+                    if dx == -1 and not current.has_left_wall:
+                        current.draw_move(neighbor)
+                        if self.__solve_r(ni, nj):
+                            return True
+                        current.draw_move(neighbor, undo=True)
+                    elif dx == 1 and not current.has_right_wall:
+                        current.draw_move(neighbor)
+                        if self.__solve_r(ni, nj):
+                            return True
+                        current.draw_move(neighbor, undo=True)
+                    elif dy == -1 and not current.has_top_wall:
+                        current.draw_move(neighbor)
+                        if self.__solve_r(ni, nj):
+                            return True
+                        current.draw_move(neighbor, undo=True)
+                    elif dy == 1 and not current.has_bottom_wall:
+                        current.draw_move(neighbor)
+                        if self.__solve_r(ni, nj):
+                            return True
+                        current.draw_move(neighbor, undo=True)
+        return False
+
+
 if __name__ == "__main__":
     win = Window(800, 600)
 
-    # Run with seed for consistent maze
     maze = Maze(
         x1=50,
         y1=50,
@@ -197,7 +240,8 @@ if __name__ == "__main__":
         cell_size_x=40,
         cell_size_y=40,
         win=win,
-        seed=0  # use None for randomness
+        seed=0
     )
 
+    maze.solve()
     win.wait_for_close()
